@@ -59,31 +59,41 @@
  color: var(--text-muted);
  }
 
- /* منطقة الرفع (Drop Zone) */
- .drop-zone {
+ /* زر اختيار الملفات الصريح والمباشر لتوافق تام مع الآيفون */
+ .upload-section {
+ text-align: center;
+ margin-bottom: 25px;
+ background: #fafafa;
  border: 2px dashed var(--border-color);
  border-radius: 8px;
- padding: 30px 20px;
- text-align: center;
+ padding: 25px;
+ }
+
+ .btn-upload {
+ display: inline-block;
+ background-color: var(--primary);
+ color: white;
+ padding: 12px 24px;
+ font-size: 1rem;
+ font-weight: 600;
+ border-radius: 8px;
  cursor: pointer;
- transition: all 0.2s ease;
- background-color: #fafafa;
- margin-bottom: 20px;
+ transition: background-color 0.2s;
+ box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
  }
 
- .drop-zone:hover, .drop-zone.dragover {
- border-color: var(--primary);
- background-color: #eff6ff;
+ .btn-upload:hover {
+ background-color: var(--primary-hover);
  }
 
- .drop-zone p {
- color: var(--text-muted);
- font-size: 0.95rem;
- margin-top: 10px;
- }
-
- .drop-zone input {
+ .upload-section input[type="file"] {
  display: none;
+ }
+
+ .upload-hint {
+ font-size: 0.85rem;
+ color: var(--text-muted);
+ margin-top: 10px;
  }
 
  /* شبكة معاينة الصور */
@@ -173,7 +183,7 @@
  /* زر التحويل الرئيسي */
  .btn-convert {
  width: 100%;
- background-color: var(--primary);
+ background-color: #10b981; /* أخضر مهني للتحويل */
  color: white;
  border: none;
  border-radius: 8px;
@@ -189,7 +199,7 @@
  }
 
  .btn-convert:hover:not(:disabled) {
- background-color: var(--primary-hover);
+ background-color: #059669;
  }
 
  .btn-convert:disabled {
@@ -228,11 +238,14 @@
 
  <div class="container">
  <header>
- <h1>Wasan PDF Suite</h1> <p>تحويل ودمج الصور إلى ملف PDF واحد بكل سهولة وأمان تام داخل متصفحك</p> </header>
+ <h1>Wasan PDF Suite</h1> <p>تحويل ودمج الصور إلى ملف PDF واحد بكل أمان داخل متصفحك</p> </header>
 
- <!-- منطقة اختيار الصور -->
- <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
- <svg width="48" height="48" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> <p>اضغط لاختيار الصور أو سحبها وإفلاتها هنا</p> <!-- تم تعديل حقل الإدخال ليفتح مكتبة الصور والصيغ بدعم تام للآيفون --> <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg, image/webp" multiple>
+ <!-- قسم رفع الصور بزر تفاعلي مباشر يفتح مكتبة الصور بدون قيود --> <div class="upload-section">
+ <label for="fileInput" class="btn-upload">
+ اختيار الصور من الجهاز / المكتبة
+ </label>
+ <input type="file" id="fileInput" accept="image/*" multiple>
+ <div class="upload-hint">يمكنك تحديد عدة صور دفعة واحدة</div>
  </div>
 
  <!-- شبكة معاينة الصور --> <div class="preview-grid" id="previewGrid"></div>
@@ -265,30 +278,12 @@
  let selectedFiles = [];
 
  const fileInput = document.getElementById('fileInput');
- const dropZone = document.getElementById('dropZone');
  const previewGrid = document.getElementById('previewGrid');
  const convertBtn = document.getElementById('convertBtn');
  const loadingText = document.getElementById('loadingText');
 
- // التعامل مع اختيار الملفات
  fileInput.addEventListener('change', (e) => {
  handleFiles(e.target.files);
- });
-
- // سحب والإفلات
- dropZone.addEventListener('dragover', (e) => {
- e.preventDefault();
- dropZone.classList.add('dragover');
- });
-
- dropZone.addEventListener('dragleave', () => {
- dropZone.classList.remove('dragover');
- });
-
- dropZone.addEventListener('drop', (e) => {
- e.preventDefault();
- dropZone.classList.remove('dragover');
- handleFiles(e.dataTransfer.files);
  });
 
  function handleFiles(files) {
@@ -300,7 +295,7 @@
  updatePreview();
  }
 
- // تحديث واجهة المعاينة function updatePreview() {
+ function updatePreview() {
  previewGrid.innerHTML = '';
  if (selectedFiles.length > 0) {
  convertBtn.removeAttribute('disabled');
@@ -323,13 +318,12 @@
  });
  }
 
- // حذف صورة من القائمة
  window.removeImage = function(index) {
  selectedFiles.splice(index, 1);
  updatePreview();
  }
 
- // عملية التحويل عبر مكتبة jsPDF convertBtn.addEventListener('click', async () => {
+ convertBtn.addEventListener('click', async () => {
  if (selectedFiles.length === 0) return;
 
  convertBtn.setAttribute('disabled', 'true');
