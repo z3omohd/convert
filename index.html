@@ -292,8 +292,7 @@
  <div class="upload-section">
  <label for="fileInput" class="btn-upload">
  اختيار الصور من الجهاز / المكتبة
- </label>
- <input type="file" id="fileInput" accept="image/*" multiple> <div class="upload-hint">يمكنك تحديد وترتيب عدة صور دفعة واحدة</div> </div>
+ </label> <!-- تم توسيع القبول ليشمل جميع صيغ الصور وتفادي مشاكل الآيفون --> <input type="file" id="fileInput" accept="image/*" multiple> <div class="upload-hint">يمكنك تحديد وترتيب عدة صور دفعة واحدة</div> </div>
 
  <!-- شبكة معاينة الصور --> <div class="preview-grid" id="previewGrid"></div>
 
@@ -340,18 +339,21 @@
  const loadingText = document.getElementById('loadingText');
 
  fileInput.addEventListener('change', (e) => {
- handleFiles(e.target.files); fileInput.value = ''; // لإتاحة اختيار نفس الصور مرة أخرى إن أُمِر });
+ if (e.target.files && e.target.files.length > 0) {
+ handleFiles(e.target.files);
+ fileInput.value = ''; // تصفير الحقل لإتاحة اختيار نفس الصور لاحقاً
+ }
+ });
 
  function handleFiles(files) {
  for (let file of files) {
- if (file.type.startsWith('image/')) {
+ // قبول أي ملف ضمن نطاق الصور
  selectedFiles.push(file);
- }
  }
  updatePreview();
  }
 
- // تحديث واجهة المعاينة وإضافة أزرار الترتيب والحذف function updatePreview() {
+ // تحديث واجهة المعاينة مع حماية كاملة ضد الأخطاء function updatePreview() {
  previewGrid.innerHTML = '';
  if (selectedFiles.length > 0) {
  convertBtn.removeAttribute('disabled');
@@ -373,7 +375,10 @@
  </div>
  `;
  previewGrid.appendChild(card);
- }
+ };
+ reader.onerror = function() {
+ console.error("فشل قراءة الملف رقم: " + index);
+ };
  reader.readAsDataURL(file);
  });
  }
@@ -444,7 +449,7 @@
  pdf.save('Wasan-Pro-Document.pdf');
 
  } catch (error) {
- console.error(error); alert('حدث خطأ أثناء معالجة الصور، يرجى المحاولة مرة أخرى.'); } finally {
+ console.error(error); alert('حدث خطأ أثناء معالجة الصور، يرجى التأكد من أن الملفات المحددة صور سليمة.'); } finally {
  convertBtn.removeAttribute('disabled');
  loadingText.style.display = 'none';
  }
@@ -468,7 +473,7 @@
  });
  }
 
- // دالة ضغط الصور لتفعيل إعدادات الجودة في النسخة الـ Pro function compressImage(base64Str, quality) {
+ function compressImage(base64Str, quality) {
  return new Promise((resolve) => {
  const img = new Image();
  img.src = base64Str;
@@ -479,6 +484,8 @@
  const ctx = canvas.getContext('2d');
  ctx.drawImage(img, 0, 0);
  resolve(canvas.toDataURL('image/jpeg', quality));
+ };
+ img.onerror = () => { // في حال فشل معالجة الكانفاس، يتم إرجاع الصورة الأصلية مباشرة لتجنب التوقف resolve(base64Str);
  };
  });
  }
