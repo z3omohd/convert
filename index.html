@@ -75,7 +75,7 @@
  color: var(--text-muted);
  }
 
- /* زر اختيار الملفات الصريح والمباشر */
+ /* قسم رفع الصور */
  .upload-section {
  text-align: center;
  margin-bottom: 25px;
@@ -112,7 +112,8 @@
  margin-top: 10px;
  }
 
- /* شبكة معاينة الصور المحدثة مع أدوات الترتيب */ .preview-grid {
+ /* شبكة معاينة الصور */
+ .preview-grid {
  display: grid;
  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
  gap: 15px;
@@ -164,7 +165,7 @@
  background: #dc2626;
  }
 
- /* أزرار إعادة الترتيب للـ Pro */ .card-actions {
+ .card-actions {
  display: flex;
  width: 100%;
  background: #f1f5f9;
@@ -196,7 +197,8 @@
  border-left: 1px solid var(--border-color);
  }
 
- /* لوحة التحكم والخيارات الاحترافية */ .controls-panel {
+ /* لوحة التحكم والخيارات */
+ .controls-panel {
  display: grid;
  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
  gap: 15px;
@@ -255,7 +257,6 @@
  cursor: not-allowed;
  }
 
- /* حالة التحميل */
  .loading {
  display: none;
  text-align: center;
@@ -264,7 +265,6 @@
  margin-top: 10px;
  }
 
- /* تذييل الصفحة وتوقيع المتجر */
  footer {
  text-align: center;
  margin-top: 20px;
@@ -288,15 +288,15 @@
  <header>
  <h1>Wasan PDF Suite <span class="pro-badge">PRO</span></h1> <p>تحويل ودمج وتصدير الصور إلى ملف PDF باحترافية وأمان تام داخل متصفحك</p> </header>
 
- <!-- قسم رفع الصور -->
  <div class="upload-section">
  <label for="fileInput" class="btn-upload">
  اختيار الصور من الجهاز / المكتبة
- </label> <!-- تم توسيع القبول ليشمل جميع صيغ الصور وتفادي مشاكل الآيفون --> <input type="file" id="fileInput" accept="image/*" multiple> <div class="upload-hint">يمكنك تحديد وترتيب عدة صور دفعة واحدة</div> </div>
+ </label>
+ <input type="file" id="fileInput" accept="image/*" multiple> <div class="upload-hint">يمكنك تحديد وترتيب عدة صور دفعة واحدة</div> </div>
 
- <!-- شبكة معاينة الصور --> <div class="preview-grid" id="previewGrid"></div>
+ <div class="preview-grid" id="previewGrid"></div>
 
- <!-- لوحة الخيارات المتقدمة (Pro Options) --> <div class="controls-panel">
+ <div class="controls-panel">
  <div class="control-group">
  <label for="pageSize">حجم الصفحة</label>
  <select id="pageSize">
@@ -321,12 +321,11 @@
  </div>
  </div>
 
- <!-- زر التنفيذ -->
  <button id="convertBtn" class="btn-convert" disabled>تحويل إلى PDF وتنزيل الملف </button>
  <div class="loading" id="loadingText">جاري معالجة الصور وضبط الترتيب... انتظر قليلاً </div>
  </div>
 
- <!-- توقيع متجر وسن الرقمي --> <footer>
+ <footer>
  <span>WASAN DIGITAL STORE</span> &copy; 2026 — ALL RIGHTS RESERVED
  </footer>
 
@@ -341,19 +340,20 @@
  fileInput.addEventListener('change', (e) => {
  if (e.target.files && e.target.files.length > 0) {
  handleFiles(e.target.files);
- fileInput.value = ''; // تصفير الحقل لإتاحة اختيار نفس الصور لاحقاً
+ fileInput.value = '';
  }
  });
 
  function handleFiles(files) {
- for (let file of files) {
- // قبول أي ملف ضمن نطاق الصور
- selectedFiles.push(file);
+ for (let i = 0; i < files.length; i++) {
+ if (files[i].type.startsWith('image/') || files[i].name.match(/\.(jpg|jpeg|png|webp|heic)$/i)) {
+ selectedFiles.push(files[i]);
+ }
  }
  updatePreview();
  }
 
- // تحديث واجهة المعاينة مع حماية كاملة ضد الأخطاء function updatePreview() {
+ function updatePreview() {
  previewGrid.innerHTML = '';
  if (selectedFiles.length > 0) {
  convertBtn.removeAttribute('disabled');
@@ -367,29 +367,25 @@
  const card = document.createElement('div');
  card.className = 'preview-card';
  card.innerHTML = `
- <button class="delete-btn" onclick="removeImage(${index})" title="حذف">×</button>
+ <button class="delete-btn" onclick="removeImage(${index})" type="button">×</button>
  <img src="${e.target.result}" alt="Preview">
  <div class="card-actions">
- <button class="reorder-btn" onclick="moveImage(${index}, -1)" ${index === 0 ? 'disabled' : ''} title="تحريك لليمين"> </button>
- <button class="reorder-btn" onclick="moveImage(${index}, 1)" ${index === selectedFiles.length - 1 ? 'disabled' : ''} title="تحريك لليسار"> </button>
+ <button class="reorder-btn" onclick="moveImage(${index}, -1)" ${index === 0 ? 'disabled' : ''} type="button"> </button>
+ <button class="reorder-btn" onclick="moveImage(${index}, 1)" ${index === selectedFiles.length - 1 ? 'disabled' : ''} type="button"> </button>
  </div>
  `;
  previewGrid.appendChild(card);
- };
- reader.onerror = function() {
- console.error("فشل قراءة الملف رقم: " + index);
  };
  reader.readAsDataURL(file);
  });
  }
 
- // حذف صورة
  window.removeImage = function(index) {
  selectedFiles.splice(index, 1);
  updatePreview();
  }
 
- // تحريك الصورة يميناً أو يساراً في الترتيب window.moveImage = function(index, direction) {
+ window.moveImage = function(index, direction) {
  const newIndex = index + direction;
  if (newIndex >= 0 && newIndex < selectedFiles.length) {
  const temp = selectedFiles[index];
@@ -399,7 +395,7 @@
  }
  }
 
- // عملية التحويل البرمجية مع خيارات الـ Pro convertBtn.addEventListener('click', async () => {
+ convertBtn.addEventListener('click', async () => {
  if (selectedFiles.length === 0) return;
 
  convertBtn.setAttribute('disabled', 'true');
@@ -420,8 +416,6 @@
  for (let i = 0; i < selectedFiles.length; i++) {
  const file = selectedFiles[i];
  const base64Data = await readFileAsDataURL(file);
- 
- // ضغط الصورة بدئياً عبر Canvas لتطبيق إعدادات الـ Quality المختارة
  const compressedData = await compressImage(base64Data, qualitySetting);
  const imgProps = await getImageDimensions(compressedData);
  
@@ -449,7 +443,7 @@
  pdf.save('Wasan-Pro-Document.pdf');
 
  } catch (error) {
- console.error(error); alert('حدث خطأ أثناء معالجة الصور، يرجى التأكد من أن الملفات المحددة صور سليمة.'); } finally {
+ console.error(error); alert('حدث خطأ أثناء معالجة الصور، تأكد من صحة الملفات.'); } finally {
  convertBtn.removeAttribute('disabled');
  loadingText.style.display = 'none';
  }
@@ -485,8 +479,7 @@
  ctx.drawImage(img, 0, 0);
  resolve(canvas.toDataURL('image/jpeg', quality));
  };
- img.onerror = () => { // في حال فشل معالجة الكانفاس، يتم إرجاع الصورة الأصلية مباشرة لتجنب التوقف resolve(base64Str);
- };
+ img.onerror = () => resolve(base64Str);
  });
  }
  </script>
