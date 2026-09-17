@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Wasan PDF Suite - تحويل الصور إلى PDF</title> <!-- استدعاء مكتبة jsPDF من خلال CDN --> <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+ <style>
+ :root {
+ --bg-color: #f8fafc;
+ --card-bg: #ffffff;
+ --primary: #2563eb;
+ --primary-hover: #1d4ed8;
+ --text-main: #1e293b;
+ --text-muted: #64748b;
+ --border-color: #e2e8f0;
+ --danger: #ef4444;
+ }
+
+ * {
+ box-sizing: border-box;
+ margin: 0;
+ padding: 0;
+ font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+ }
+
+ body {
+ background-color: var(--bg-color);
+ color: var(--text-main);
+ min-height: 100vh;
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ justify-content: space-between;
+ padding: 20px;
+ }
+
+ .container {
+ width: 100%;
+ max-width: 800px;
+ background: var(--card-bg);
+ border-radius: 12px;
+ box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+ padding: 30px;
+ margin-top: 10px;
+ }
+
+ header {
+ text-align: center;
+ margin-bottom: 25px;
+ }
+
+ header h1 {
+ font-size: 1.5rem;
+ color: var(--primary);
+ margin-bottom: 8px;
+ }
+
+ header p {
+ font-size: 0.9rem;
+ color: var(--text-muted);
+ }
+
+ /* منطقة الرفع (Drop Zone) */
+ .drop-zone {
+ border: 2px dashed var(--border-color);
+ border-radius: 8px;
+ padding: 30px 20px;
+ text-align: center;
+ cursor: pointer;
+ transition: all 0.2s ease;
+ background-color: #fafafa;
+ margin-bottom: 20px;
+ }
+
+ .drop-zone:hover, .drop-zone.dragover {
+ border-color: var(--primary);
+ background-color: #eff6ff;
+ }
+
+ .drop-zone p {
+ color: var(--text-muted);
+ font-size: 0.95rem;
+ margin-top: 10px;
+ }
+
+ .drop-zone input {
+ display: none;
+ }
+
+ /* شبكة معاينة الصور */
+ .preview-grid {
+ display: grid;
+ grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+ gap: 15px;
+ margin-bottom: 25px;
+ max-height: 350px;
+ overflow-y: auto;
+ padding: 5px;
+ }
+
+ .preview-card {
+ position: relative;
+ background: #fff;
+ border: 1px solid var(--border-color);
+ border-radius: 6px;
+ overflow: hidden;
+ box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+ }
+
+ .preview-card img {
+ width: 100%;
+ height: 100px;
+ object-fit: cover;
+ display: block;
+ }
+
+ .delete-btn {
+ position: absolute;
+ top: 5px;
+ left: 5px;
+ background: var(--danger);
+ color: white;
+ border: none;
+ border-radius: 50%;
+ width: 24px;
+ height: 24px;
+ font-size: 0.8rem;
+ cursor: pointer;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ transition: background 0.2s;
+ }
+
+ .delete-btn:hover {
+ background: #dc2626;
+ }
+
+ /* لوحة التحكم والخيارات */
+ .controls-panel {
+ display: flex;
+ gap: 15px;
+ margin-bottom: 20px;
+ flex-wrap: wrap;
+ background: #f8fafc;
+ padding: 15px;
+ border-radius: 8px;
+ border: 1px solid var(--border-color);
+ }
+
+ .control-group {
+ flex: 1;
+ min-width: 200px;
+ display: flex;
+ flex-direction: column;
+ gap: 5px;
+ }
+
+ .control-group label {
+ font-size: 0.85rem;
+ color: var(--text-muted);
+ font-weight: 500;
+ }
+
+ .control-group select {
+ padding: 8px 12px;
+ border: 1px solid var(--border-color);
+ border-radius: 6px;
+ background: white;
+ font-size: 0.9rem;
+ outline: none;
+ }
+
+ /* زر التحويل الرئيسي */
+ .btn-convert {
+ width: 100%;
+ background-color: var(--primary);
+ color: white;
+ border: none;
+ border-radius: 8px;
+ padding: 12px;
+ font-size: 1rem;
+ font-weight: 600;
+ cursor: pointer;
+ transition: background-color 0.2s;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ gap: 8px;
+ }
+
+ .btn-convert:hover:not(:disabled) {
+ background-color: var(--primary-hover);
+ }
+
+ .btn-convert:disabled {
+ background-color: #cbd5e1;
+ cursor: not-allowed;
+ }
+
+ /* حالة التحميل */
+ .loading {
+ display: none;
+ text-align: center;
+ color: var(--primary);
+ font-size: 0.9rem;
+ margin-top: 10px;
+ }
+
+ /* تذييل الصفحة وتوقيع المتجر */
+ footer {
+ text-align: center;
+ margin-top: 20px;
+ font-size: 0.8rem;
+ color: var(--text-muted);
+ border-top: 1px solid var(--border-color);
+ padding-top: 15px;
+ width: 100%;
+ max-width: 800px;
+ }
+
+ footer span {
+ color: var(--primary);
+ font-weight: bold;
+ }
+ </style>
+</head>
+<body>
+
+ <div class="container">
+ <header>
+ <h1>Wasan PDF Suite</h1> <p>تحويل ودمج الصور إلى ملف PDF واحد بكل سهولة وأمان تام داخل متصفحك</p> </header>
+
+ <!-- منطقة اختيار الصور -->
+ <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+ <svg width="48" height="48" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> <p>اضغط لاختيار الصور أو سحبها وإفلاتها هنا</p> <input type="file" id="fileInput" accept="image/*" multiple>
+ </div>
+
+ <!-- شبكة معاينة الصور --> <div class="preview-grid" id="previewGrid"></div>
+
+ <!-- خيارات إضافية --> <div class="controls-panel">
+ <div class="control-group">
+ <label for="pageSize">حجم الصفحة</label>
+ <select id="pageSize">
+ <option value="a4">A4 القياسي</option>
+ <option value="fit">مطابق لحجم الصورة الأصلية</option>
+ </select>
+ </div>
+ <div class="control-group">
+ <label for="orientation">اتجاه الصفحة</label>
+ <select id="orientation">
+ <option value="portrait">عمودي (Portrait)</option>
+ <option value="landscape">أفقي (Landscape)</option>
+ </select>
+ </div>
+ </div>
+
+ <!-- زر التنفيذ -->
+ <button id="convertBtn" class="btn-convert" disabled>تحويل إلى PDF وتنزيل الملف</button> <div class="loading" id="loadingText">جاري معالجة الصور وإنشاء ملف الـ PDF... انتظر قليلاً </div> </div>
+
+ <!-- توقيع متجر وسن الرقمي --> <footer>
+ <span>WASAN DIGITAL STORE</span> &copy; 2026 — ALL RIGHTS RESERVED
+ </footer>
+
+ <script>
+ let selectedFiles = [];
+
+ const fileInput = document.getElementById('fileInput');
+ const dropZone = document.getElementById('dropZone');
+ const previewGrid = document.getElementById('previewGrid');
+ const convertBtn = document.getElementById('convertBtn');
+ const loadingText = document.getElementById('loadingText');
+
+ // التعامل مع اختيار الملفات
+ fileInput.addEventListener('change', (e) => {
+ handleFiles(e.target.files);
+ });
+
+ // سحب والإفلات
+ dropZone.addEventListener('dragover', (e) => {
+ e.preventDefault();
+ dropZone.classList.add('dragover');
+ });
+
+ dropZone.addEventListener('dragleave', () => {
+ dropZone.classList.remove('dragover');
+ });
+
+ dropZone.addEventListener('drop', (e) => {
+ e.preventDefault();
+ dropZone.classList.remove('dragover');
+ handleFiles(e.dataTransfer.files);
+ });
+
+ function handleFiles(files) {
+ for (let file of files) {
+ if (file.type.startsWith('image/')) {
+ selectedFiles.push(file);
+ }
+ }
+ updatePreview();
+ }
+
+ // تحديث واجهة المعاينة function updatePreview() {
+ previewGrid.innerHTML = '';
+ if (selectedFiles.length > 0) {
+ convertBtn.removeAttribute('disabled');
+ } else {
+ convertBtn.setAttribute('disabled', 'true');
+ }
+
+ selectedFiles.forEach((file, index) => {
+ const reader = new FileReader();
+ reader.onload = function(e) {
+ const card = document.createElement('div');
+ card.className = 'preview-card';
+ card.innerHTML = `
+ <img src="${e.target.result}" alt="Preview">
+ <button class="delete-btn" onclick="removeImage(${index})">×</button>
+ `;
+ previewGrid.appendChild(card);
+ }
+ reader.readAsDataURL(file);
+ });
+ }
+
+ // حذف صورة من القائمة
+ window.removeImage = function(index) {
+ selectedFiles.splice(index, 1);
+ updatePreview();
+ }
+
+ // عملية التحويل عبر مكتبة jsPDF convertBtn.addEventListener('click', async () => {
+ if (selectedFiles.length === 0) return;
+
+ convertBtn.setAttribute('disabled', 'true');
+ loadingText.style.display = 'block';
+
+ try {
+ const { jsPDF } = window.jspdf;
+ const orientation = document.getElementById('orientation').value;
+ const pageSize = document.getElementById('pageSize').value;
+
+ const pdf = new jsPDF({
+ orientation: orientation,
+ unit: 'mm',
+ format: pageSize === 'a4' ? 'a4' : [210, 297]
+ });
+
+ for (let i = 0; i < selectedFiles.length; i++) {
+ const file = selectedFiles[i];
+ const base64Data = await readFileAsDataURL(file);
+ const imgProps = await getImageDimensions(base64Data);
+ 
+ if (i > 0) {
+ pdf.addPage();
+ }
+
+ const pageWidth = pdf.internal.pageSize.getWidth();
+ const pageHeight = pdf.internal.pageSize.getHeight();
+
+ if (pageSize === 'fit') {
+ pdf.setPage(i + 1);
+ pdf.addImage(base64Data, 'JPEG', 0, 0, pageWidth, (imgProps.height * pageWidth) / imgProps.width);
+ } else {
+ const ratio = Math.min(pageWidth / imgProps.width, pageHeight / imgProps.height);
+ const imgWidth = imgProps.width * ratio * 0.9;
+ const imgHeight = imgProps.height * ratio * 0.9;
+ const x = (pageWidth - imgWidth) / 2;
+ const y = (pageHeight - imgHeight) / 2;
+
+ pdf.addImage(base64Data, 'JPEG', x, y, imgWidth, imgHeight);
+ }
+ }
+
+ pdf.save('Wasan-Converted-Document.pdf');
+
+ } catch (error) {
+ console.error(error); alert('حدث خطأ أثناء معالجة الصور، يرجى المحاولة مرة أخرى.'); } finally {
+ convertBtn.removeAttribute('disabled');
+ loadingText.style.display = 'none';
+ }
+ });
+
+ function readFileAsDataURL(file) {
+ return new Promise((resolve, reject) => {
+ const reader = new FileReader();
+ reader.onload = () => resolve(reader.result);
+ reader.onerror = reject;
+ reader.readAsDataURL(file);
+ });
+ }
+
+ function getImageDimensions(url) {
+ return new Promise((resolve, reject) => {
+ const img = new Image();
+ img.onload = () => resolve({ width: img.width, height: img.height });
+ img.onerror = reject;
+ img.src = url;
+ });
+ }
+ </script>
+</body>
+</html>
